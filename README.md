@@ -8,45 +8,45 @@ A comprehensive, production-grade implementation of a modern Large Language Mode
 
 ```mermaid
 flowchart TD
-    subgraph Data & Tokenization
-        RAW[Raw Text / Streamed Wikipedia] --> D_PRE[StreamingPretrainDataset]
-        ALPACA[Instruction SFT Data] --> D_SFT[Qwen3FineTuningDataset]
-        MATH_BENCH[MATH / GSM8k Benchmarks] --> D_RL[MathDataset]
-        TOK_JSON[tokenizer.json / 151,936 Vocab] --> QTOK[Qwen3Tokenizer]
+    subgraph Data ["Data & Tokenization"]
+        RAW["Raw Text / Streamed Wikipedia"] --> D_PRE["StreamingPretrainDataset"]
+        ALPACA["Instruction SFT Data"] --> D_SFT["Qwen3FineTuningDataset"]
+        MATH_BENCH["MATH / GSM8k Benchmarks"] --> D_RL["MathDataset"]
+        TOK_JSON["tokenizer.json (151,936 Vocab)"] --> QTOK["Qwen3Tokenizer"]
         QTOK --> D_PRE
         QTOK --> D_SFT
         QTOK --> D_RL
     end
 
-    subgraph Core Architecture
-        CFG[llm/config.json / Qwen3Config] --> MODEL[Qween3Model]
-        MODEL --> GQA[Grouped Query Attention (16 Q / 8 KV Heads)]
-        MODEL --> ROPE[Rotary Embeddings (RoPE, theta=1M)]
-        MODEL --> SWIGLU[SwiGLU FeedForward Network]
-        MODEL --> RMS[RMSNorm with FP32 Precision Guard]
-        MODEL --> KV[KVCache & Gradient Checkpointing]
+    subgraph Core ["Core Architecture"]
+        CFG["llm/config.json (Qwen3Config)"] --> MODEL["Qween3Model"]
+        MODEL --> GQA["Grouped Query Attention (16 Q / 8 KV Heads)"]
+        MODEL --> ROPE["Rotary Embeddings (RoPE, theta=1M)"]
+        MODEL --> SWIGLU["SwiGLU FeedForward Network"]
+        MODEL --> RMS["RMSNorm with FP32 Precision Guard"]
+        MODEL --> KV["KVCache & Gradient Checkpointing"]
     end
 
-    subgraph Training Pipeline
-        D_PRE --> PRETRAIN[llm/pretrain/pretrain_from_scratch.py]
-        PRETRAIN --> BASE_CKPT[(Base Model Weights)]
+    subgraph Training ["Training Pipeline"]
+        D_PRE --> PRETRAIN["llm/pretrain/pretrain_from_scratch.py"]
+        PRETRAIN --> BASE_CKPT[("Base Model Weights")]
         
-        BASE_CKPT --> CONT_PRE[llm/pretrain/continuous_pretraining.py]
-        BASE_CKPT --> LORA[llm/finetune/lora.py - LoRA Injection]
-        LORA --> SFT[llm/finetune/conversational_assistant.py]
+        BASE_CKPT --> CONT_PRE["llm/pretrain/continuous_pretraining.py"]
+        BASE_CKPT --> LORA["llm/finetune/lora.py (LoRA Injection)"]
+        LORA --> SFT["llm/finetune/conversational_assistant.py"]
         D_SFT --> SFT
-        SFT --> SFT_CKPT[(SFT LoRA Adapters)]
+        SFT --> SFT_CKPT[("SFT LoRA Adapters")]
         
-        SFT_CKPT --> DPO[llm/rl/dpo_trainer.py - DPO Preference Tuning]
-        BASE_CKPT --> GRPO[RL/rl_training_pipeline.py - GRPO RL]
+        SFT_CKPT --> DPO["llm/rl/dpo_trainer.py (DPO Preference Tuning)"]
+        BASE_CKPT --> GRPO["RL/rl_training_pipeline.py (GRPO RL)"]
         D_RL --> GRPO
     end
 
-    subgraph Inference & Orchestration
-        GRPO --> ENGINE[Qwen3InferenceEngine - Streaming KV Cache]
+    subgraph Inference ["Inference & Orchestration"]
+        GRPO --> ENGINE["Qwen3InferenceEngine (Streaming KV Cache)"]
         SFT_CKPT --> ENGINE
-        ENGINE --> CRITIQUE[llm/rl/reasoning.py - Self-Critique Loop]
-        ENGINE --> SUPERVISOR[training_pipeline.py - Supervisor-Worker Synthesis]
+        ENGINE --> CRITIQUE["llm/rl/reasoning.py (Self-Critique Loop)"]
+        ENGINE --> SUPERVISOR["training_pipeline.py (Supervisor-Worker Synthesis)"]
     end
 ```
 
